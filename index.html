@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nola – AI Assistant Template</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+    }
+
+    .nola-container {
+      width: 100vw;
+      height: 100vh;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+
+    .nola-avatar {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-height: 100vh;
+      width: auto;
+      pointer-events: none;
+      animation: idleBreathing 4s ease-in-out infinite;
+    }
+
+    @keyframes idleBreathing {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.01); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="nola-container" id="nola-env">
+    <img src="1000062055.png" class="nola-avatar" id="nola-avatar" />
+  </div>
+
+  <script>
+// === NOLA AI ASSISTANT (GROQ + LLaMA3.1) ===
+// This version is Webflow-ready and fully client-side.
+
+// 1) CONFIGURATION --------------------------------
+const GROQ_API_KEY = "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"; // replace manually in Webflow
+const MODEL = "llama-3.1-8b"; // recommended for speed
+
+// 2) MICROPHONE PERMISSIONS ------------------------
+async function initMic() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log("Microphone permission granted.");
+  } catch (e) {
+    alert("Microphone access required.");
+  }
+}
+initMic();
+
+// 3) STT: Vosk (browser) ---------------------------
+// Simple placeholder: user presses "space" to talk
+let listening = false;
+let transcript = "";
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !listening) {
+    listening = true;
+    transcript = prompt("Say something (placeholder STT):");
+    if (transcript) sendToGroq(transcript);
+    listening = false;
+  }
+});
+
+// 4) SEND TEXT TO GROQ -----------------------------
+async function sendToGroq(text) {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: "system", content: "You are Nola Blake, a warm, emotional, feminine AI assistant." },
+        { role: "user", content: text }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  const answer = data.choices?.[0]?.message?.content || "";
+  speakText(answer);
+}
+
+// 5) TEXT-TO-SPEECH (FREE, SIMPLE) ------------------
+function speakText(text) {
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.pitch = 1.1;
+  utter.rate = 1.05;
+  utter.volume = 1;
+  speechSynthesis.speak(utter);
+}
+
+console.log("Nola template with Groq integration loaded.");
+</script>
+</body>
+</html>
